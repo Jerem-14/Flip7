@@ -3,7 +3,12 @@
     "allow": [
       "WebSearch",
       "WebFetch(domain:en.doc.boardgamearena.com)",
-      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --no-git)"
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --no-git)",
+      "Bash(npx tsc *)",
+      "Bash(npm run *)",
+      "Bash(curl -s -X POST http://localhost:3000/api/game/create -H \"Content-Type: application/json\" -d '{\"nickname\":\"Alice\"}')",
+      "Bash(curl -s -X POST http://localhost:3000/api/game/KUTC-2142/join -H 'Content-Type: application/json' -d '{\"nickname\":\"Bob\"}')",
+      "Bash(curl -s --max-time 2 http://localhost:3000/api/game/KUTC-2142/stream)"
     ]
   }
 }
