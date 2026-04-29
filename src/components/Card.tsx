@@ -14,16 +14,12 @@ const sizeClasses = {
   lg: 'w-20 h-28 text-lg',
 }
 
-function cardLabel(card: CardType): string {
-  if (card.type === 'number') return String(card.value)
-  if (card.type === 'modifier') return card.modifier!
-  const labels: Record<string, string> = {
-    freeze: '❄️',
-    second_chance: '🛡',
-    flip_three: '×3',
-  }
-  return labels[card.action!] ?? '?'
+const ACTION_LABEL: Record<string, { icon: string; sub: string }> = {
+  freeze: { icon: '🛡️', sub: 'STOP' },
+  second_chance: { icon: '❤️', sub: '2nd Chance' },
+  flip_three: { icon: '×3', sub: 'Flip Three' },
 }
+
 
 function cardColors(card: CardType): string {
   if (card.type === 'number') {
@@ -52,16 +48,24 @@ export default function Card({ card, size = 'md', faceDown = false }: Props) {
     )
   }
 
+  if (card.type === 'action') {
+    const { icon, sub } = ACTION_LABEL[card.action!] ?? { icon: '?', sub: '' }
+    return (
+      <div
+        className={`${sizeClasses[size]} ${cardColors(card)} rounded-lg border-2 flex flex-col items-center justify-center select-none shrink-0 shadow-sm gap-0.5`}
+      >
+        <span className="text-lg leading-none">{icon}</span>
+        <span className="text-[0.55em] font-semibold text-center leading-tight opacity-80 px-0.5">{sub}</span>
+      </div>
+    )
+  }
+
+  const label = card.type === 'number' ? String(card.value) : card.modifier!
   return (
     <div
-      className={`${sizeClasses[size]} ${cardColors(card)} rounded-lg border-2 flex flex-col items-center justify-center font-bold select-none shrink-0 shadow-sm`}
+      className={`${sizeClasses[size]} ${cardColors(card)} rounded-lg border-2 flex items-center justify-center font-bold select-none shrink-0 shadow-sm`}
     >
-      <span>{cardLabel(card)}</span>
-      {card.type === 'number' && (
-        <span className="text-[0.6em] opacity-60 mt-0.5">
-          {card.value === 0 ? 'zero' : ''}
-        </span>
-      )}
+      <span>{label}</span>
     </div>
   )
 }

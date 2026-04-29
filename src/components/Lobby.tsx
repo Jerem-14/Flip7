@@ -44,7 +44,10 @@ export default function Lobby({ state, myId, onStart }: Props) {
             <li key={p.id} className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-400" />
               <span className={p.id === myId ? 'font-bold' : ''}>{p.nickname}</span>
-              {p.id === state.hostId && (
+              {p.id === state.hostId && p.id === myId && (
+                <span className="text-xs text-amber-400 ml-auto">host (you)</span>
+              )}
+              {p.id === state.hostId && p.id !== myId && (
                 <span className="text-xs text-amber-400 ml-auto">host</span>
               )}
               {p.id === myId && p.id !== state.hostId && (
