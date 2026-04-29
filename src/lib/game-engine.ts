@@ -279,7 +279,8 @@ function processDrawnCard(
     s = { ...s, players: playersWithCard }
 
     if (card.action === 'second_chance') {
-      return s
+      // Turn ends after drawing Second Chance (passive card, no targeting)
+      return advancePlayer(s)
     }
 
     // Freeze or Flip Three: need to pick a target
@@ -345,7 +346,7 @@ function processDrawnCard(
       return endRound(s)
     }
 
-    // If in Flip Three, decrement counter
+    // If in Flip Three, decrement counter (automated — do not advance turn here)
     if (s.pendingFlipThreeDraws > 0) {
       s = { ...s, pendingFlipThreeDraws: s.pendingFlipThreeDraws - 1 }
       if (s.pendingFlipThreeDraws === 0) {
@@ -354,7 +355,8 @@ function processDrawnCard(
       return applyFlipThreeDraws(s)
     }
 
-    return s
+    // Normal flip: turn ends after drawing one card
+    return advancePlayer(s)
   }
 
   // ── Modifier card ──
@@ -372,7 +374,8 @@ function processDrawnCard(
       return applyFlipThreeDraws(s)
     }
 
-    return s
+    // Normal flip: turn ends after drawing one card
+    return advancePlayer(s)
   }
 
   return s
