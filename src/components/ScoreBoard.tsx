@@ -1,5 +1,6 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import { ClientGameState, GameAction } from '@/lib/types'
 
 interface Props {
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export default function ScoreBoard({ state, myId, onAction }: Props) {
+  const router = useRouter()
   const isRoundEnd = state.phase === 'round_end'
   const isGameEnd = state.phase === 'game_end'
 
@@ -43,6 +45,9 @@ export default function ScoreBoard({ state, myId, onAction }: Props) {
               <tr key={p.id} className="border-b border-gray-700/50">
                 <td className="py-2 flex items-center gap-2">
                   {i === 0 && isGameEnd && <span>🥇</span>}
+                  {i === 1 && isGameEnd && <span>🥈</span>}
+                  {i === 2 && isGameEnd && <span>🥉</span>}
+                  {i >= 3 && isGameEnd && <span>💩</span>}
                   <span className={p.id === myId ? 'font-bold text-white' : 'text-gray-300'}>
                     {p.nickname}
                   </span>
@@ -67,6 +72,29 @@ export default function ScoreBoard({ state, myId, onAction }: Props) {
         )}
         {isRoundEnd && !isHost && (
           <p className="text-center text-gray-500 text-sm">Waiting for host to start next round…</p>
+        )}
+
+        {isGameEnd && (
+          <div className="flex gap-3">
+            <button
+              onClick={() => router.push('/')}
+              className="flex-1 py-3 bg-gray-600 hover:bg-gray-500 rounded-xl font-bold text-lg transition-colors"
+            >
+              Home
+            </button>
+            {isHost ? (
+              <button
+                onClick={() => onAction({ type: 'restart_game' })}
+                className="flex-1 py-3 bg-emerald-500 hover:bg-emerald-400 rounded-xl font-bold text-lg transition-colors"
+              >
+                Play Again
+              </button>
+            ) : (
+              <div className="flex-1 py-3 rounded-xl bg-gray-700 text-center font-bold text-lg text-gray-500">
+                Play Again
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>

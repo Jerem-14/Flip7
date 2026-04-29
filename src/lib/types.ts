@@ -47,6 +47,7 @@ export type GameAction =
   | { type: 'use_second_chance' }
   | { type: 'target_action'; targetPlayerId: string }
   | { type: 'next_round' }
+  | { type: 'restart_game' }
 
 // What we send to clients (no deck details)
 export type ClientGameState = Omit<GameSession, 'deck'> & {

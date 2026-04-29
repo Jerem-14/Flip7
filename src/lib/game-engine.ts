@@ -161,6 +161,34 @@ export function applyAction(
   const player = session.players[playerIdx]
   let s = { ...session, lastActivity: Date.now() }
 
+  // ── restart_game ──
+  if (action.type === 'restart_game') {
+    if (s.phase !== 'game_end') return s
+    const players = s.players.map(p => ({
+      ...p,
+      cards: [],
+      status: 'active' as const,
+      hasSecondChance: false,
+      roundScore: 0,
+      totalScore: 0,
+    }))
+    const newSession: GameSession = {
+      ...s,
+      players,
+      deck: buildDeck(),
+      phase: 'dealing',
+      currentPlayerIndex: 0,
+      roundNumber: 1,
+      dealerIndex: 0,
+      pendingFlipThreeDraws: 0,
+      pendingActionCard: undefined,
+      pendingActionPlayerId: undefined,
+      lastFlippedCard: undefined,
+      winnerId: undefined,
+    }
+    return dealInitialCards(newSession)
+  }
+
   // ── next_round ──
   if (action.type === 'next_round') {
     if (s.phase !== 'round_end') return s
