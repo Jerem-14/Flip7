@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createUniqueCode, setSession } from '@/lib/game-store'
-import { buildDeck, dealInitialCards } from '@/lib/game-engine'
+import { buildDeck } from '@/lib/game-engine'
 import { GameSession } from '@/lib/types'
 import { randomUUID } from 'crypto'
 

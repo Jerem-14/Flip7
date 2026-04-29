@@ -119,33 +119,11 @@ function endRound(session: GameSession): GameSession {
 // ── Initial deal ──────────────────────────────────────────────────────────────
 
 export function dealInitialCards(session: GameSession): GameSession {
-  let s: GameSession = { ...session, phase: 'dealing' }
-
-  // Deal one card to each player round-robin, resolving action cards inline
-  for (let i = 0; i < s.players.length; i++) {
-    const playerIdx = (s.dealerIndex + 1 + i) % s.players.length
-    let [card, next] = drawCard(s)
-    if (!card) break
-    s = next
-
-    if (card.type === 'action') {
-      if (card.action === 'second_chance') {
-        // Give to the dealt-to player
-        const players = s.players.map((p, idx) =>
-          idx === playerIdx ? { ...p, hasSecondChance: true } : p
-        )
-        s = { ...s, players }
-      }
-      // Freeze and Flip Three during initial deal are discarded (simplified)
-    } else {
-      const players = s.players.map((p, idx) =>
-        idx === playerIdx ? { ...p, cards: [...p.cards, card!] } : p
-      )
-      s = { ...s, players }
-    }
+  return {
+    ...session,
+    phase: 'playing',
+    currentPlayerIndex: (session.dealerIndex + 1) % session.players.length,
   }
-
-  return { ...s, phase: 'playing', currentPlayerIndex: (s.dealerIndex + 1) % s.players.length }
 }
 
 // ── Main action handler ───────────────────────────────────────────────────────
