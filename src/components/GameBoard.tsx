@@ -1,6 +1,7 @@
 'use client'
 
 import { ClientGameState, GameAction } from '@/lib/types'
+import { calculateRoundScore } from '@/lib/game-engine'
 import OtherPlayers from './OtherPlayers'
 import DeckArea from './DeckArea'
 import CardComponent from './Card'
@@ -15,6 +16,7 @@ interface Props {
 
 export default function GameBoard({ state, myId, onAction }: Props) {
   const me = state.players.find(p => p.id === myId)
+  const liveRoundScore = me ? (me.status === 'busted' ? 0 : calculateRoundScore(me)) : 0
 
   return (
     <div className="min-h-screen bg-gray-900 text-white flex flex-col">
@@ -43,6 +45,7 @@ export default function GameBoard({ state, myId, onAction }: Props) {
           <>
             <div className="flex items-center gap-2 mb-3">
               <span className="text-sm text-gray-400">Your hand</span>
+              <span className="text-sm text-yellow-300 font-bold">{liveRoundScore} pts</span>
               {me.status === 'busted' && (
                 <span className="text-xs bg-red-600 px-2 py-0.5 rounded-full font-bold">BUST</span>
               )}

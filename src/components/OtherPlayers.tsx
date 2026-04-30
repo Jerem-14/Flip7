@@ -1,6 +1,7 @@
 'use client'
 
 import { ClientGameState, Player } from '@/lib/types'
+import { calculateRoundScore } from '@/lib/game-engine'
 import CardComponent from './Card'
 
 interface Props {
@@ -22,21 +23,28 @@ const statusLabel: Record<string, string> = {
   frozen: 'frozen',
 }
 
-function OtherPlayer({
+function PlayerCard({
   player,
   isCurrentTurn,
+  isMe,
 }: {
   player: Player
   isCurrentTurn: boolean
+  isMe: boolean
 }) {
+  const liveRoundScore = player.status === 'busted' ? 0 : calculateRoundScore(player)
+
   return (
     <div
       className={`flex flex-col items-center gap-2 p-3 rounded-xl transition-all ${
         isCurrentTurn ? 'ring-2 ring-yellow-400 bg-gray-700' : 'bg-gray-800'
       }`}
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5 flex-wrap justify-center">
         <span className="font-semibold text-sm text-white truncate max-w-24">{player.nickname}</span>
+        {isMe && (
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-600 text-gray-300 font-bold">you</span>
+        )}
         <span className={`text-[10px] px-1.5 py-0.5 rounded-full text-white font-bold ${statusBadge[player.status]}`}>
           {statusLabel[player.status]}
         </span>
@@ -50,26 +58,25 @@ function OtherPlayer({
         )}
       </div>
 
-      <div className="text-xs text-gray-400">
-        Score: <span className="font-bold text-white">{player.totalScore}</span>
+      <div className="flex gap-3 text-xs text-gray-400">
+        <span>Round <span className="font-bold text-yellow-300">{liveRoundScore}</span></span>
+        <span>Total <span className="font-bold text-white">{player.totalScore}</span></span>
       </div>
     </div>
   )
 }
 
 export default function OtherPlayers({ state, myId }: Props) {
-  const others = state.players.filter(p => p.id !== myId)
-  if (others.length === 0) return null
-
   return (
     <div className="flex flex-wrap gap-3 justify-center p-4">
-      {others.map((p) => {
-        const globalIdx = state.players.findIndex(pl => pl.id === p.id)
+      {state.players.map((p) => {
+        const idx = state.players.findIndex(pl => pl.id === p.id)
         return (
-          <OtherPlayer
+          <PlayerCard
             key={p.id}
             player={p}
-            isCurrentTurn={globalIdx === state.currentPlayerIndex && state.phase === 'playing'}
+            isCurrentTurn={idx === state.currentPlayerIndex && state.phase === 'playing'}
+            isMe={p.id === myId}
           />
         )
       })}
