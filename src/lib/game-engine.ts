@@ -213,7 +213,7 @@ export function applyAction(
 
     if (pendingCard.action === 'freeze') {
       const players = s.players.map((p, i) =>
-        i === targetIdx ? { ...p, status: 'frozen' as const } : p
+        i === targetIdx ? { ...p, status: 'frozen' as const, cards: [...p.cards, pendingCard] } : p
       )
       s = { ...s, players }
       if (allDone(s)) return endRound(s)
@@ -250,6 +250,8 @@ export function applyAction(
   // ── flip ──
   if (action.type === 'flip') {
     if (s.phase !== 'playing' || playerIdx !== s.currentPlayerIndex || player.status !== 'active') return s
+
+    s = { ...s, lastDiscard: undefined }
 
     let [card, next] = drawCard(s)
     s = next
@@ -316,20 +318,19 @@ function processDrawnCard(
     if (wouldBust(player, card)) {
       // Can use Second Chance?
       if (player.hasSecondChance) {
-        // Auto-use Second Chance: discard it and the duplicate, turn ends
+        // Discard Second Chance + the duplicate; player keeps their turn
+        const secondChanceCard = player.cards.find(c => c.action === 'second_chance')
         const players = s.players.map((p, i) =>
           i === playerIdx
             ? {
                 ...p,
                 hasSecondChance: false,
-                status: 'stopped' as const,
                 cards: p.cards.filter(c => c.action !== 'second_chance'),
               }
             : p
         )
-        s = { ...s, players }
-        if (allDone(s)) return endRound(s)
-        return advancePlayer(s)
+        const lastDiscard = secondChanceCard ? [secondChanceCard, card] : [card]
+        return { ...s, players, lastDiscard }
       }
 
       // Bust

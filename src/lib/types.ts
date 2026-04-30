@@ -37,6 +37,7 @@ export interface GameSession {
   pendingActionCard?: Card
   pendingActionPlayerId?: string
   lastFlippedCard?: Card
+  lastDiscard?: Card[]
   lastActivity: number
   winnerId?: string
 }

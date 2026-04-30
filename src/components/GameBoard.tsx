@@ -57,13 +57,27 @@ export default function GameBoard({ state, myId, onAction }: Props) {
               )}
             </div>
 
-            <div className="flex flex-wrap gap-2 mb-4 min-h-10">
+            <div className="flex flex-wrap gap-2 mb-2 min-h-10">
               {me.cards.length === 0 ? (
                 <span className="text-sm text-gray-500 italic">No cards yet</span>
               ) : (
                 me.cards.map(c => <CardComponent key={c.id} card={c} size="lg" />)
               )}
             </div>
+
+            {state.lastDiscard && state.lastDiscard.length > 0 && (
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-xs text-gray-500">discarded:</span>
+                {state.lastDiscard.map(c => (
+                  <div key={c.id} className="relative opacity-40 grayscale">
+                    <CardComponent card={c} size="lg" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-red-400 text-3xl font-black leading-none">✕</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
 
             <div className="flex justify-center">
               <ActionButtons state={state} myId={myId} onAction={onAction} />
