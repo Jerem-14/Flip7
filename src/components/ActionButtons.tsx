@@ -14,7 +14,7 @@ export default function ActionButtons({ state, myId, onAction }: Props) {
 
   const needsTarget =
     state.phase === 'awaiting_target' &&
-    state.pendingActionPlayerId === myId
+    state.pendingActionQueue[0]?.playerId === myId
 
   const otherTargets = needsTarget
     ? state.players.filter(p => p.id !== myId && p.status === 'active')
@@ -44,7 +44,7 @@ export default function ActionButtons({ state, myId, onAction }: Props) {
       <div className="flex flex-col items-center gap-3">
         <p className="text-sm text-orange-400 font-semibold">
           Choose a target for{' '}
-          {state.pendingActionCard?.action === 'freeze' ? 'Freeze' : 'Flip Three'}:
+          {state.pendingActionQueue[0]?.card.action === 'freeze' ? 'Freeze' : 'Flip Three'}:
         </p>
         <div className="flex flex-wrap gap-2 justify-center">
           {targets.map(p => (

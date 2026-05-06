@@ -1,4 +1,4 @@
-import { Card, GameSession, Player, ClientGameState, GameAction, ModifierValue } from './types'
+import { Card, GameSession, Player, ClientGameState, GameAction, ModifierValue, PendingAction } from './types'
 
 // ── Deck ──────────────────────────────────────────────────────────────────────
 
@@ -22,9 +22,9 @@ export function buildDeck(): Card[] {
   }
 
   // Action cards (3 of each)
-  for (let i = 0; i < 3; i++) {
-    cards.push({ id: id(), type: 'action', action: 'freeze' })
-    cards.push({ id: id(), type: 'action', action: 'second_chance' })
+  for (let i = 0; i < 15; i++) {
+    //cards.push({ id: id(), type: 'action', action: 'freeze' })
+    //cards.push({ id: id(), type: 'action', action: 'second_chance' })
     cards.push({ id: id(), type: 'action', action: 'flip_three' })
   }
 
@@ -159,8 +159,7 @@ export function applyAction(
       roundNumber: 1,
       dealerIndex: 0,
       pendingFlipThreeDraws: 0,
-      pendingActionCard: undefined,
-      pendingActionPlayerId: undefined,
+      pendingActionQueue: [],
       lastFlippedCard: undefined,
       winnerId: undefined,
     }
@@ -187,42 +186,45 @@ export function applyAction(
       roundNumber: s.roundNumber + 1,
       dealerIndex: newDealerIndex,
       pendingFlipThreeDraws: 0,
-      pendingActionCard: undefined,
-      pendingActionPlayerId: undefined,
+      pendingActionQueue: [],
       lastFlippedCard: undefined,
     }
     return dealInitialCards(newSession)
   }
 
-  // ── target_action (resolve pending Freeze or Flip Three) ──
+  // ── target_action (resolve next item in the pending action queue) ──
   if (action.type === 'target_action') {
     if (s.phase !== 'awaiting_target') return s
+    if (s.pendingActionQueue.length === 0) return s
+
+    const [current, ...remaining] = s.pendingActionQueue
     const targetIdx = s.players.findIndex(p => p.id === action.targetPlayerId)
     if (targetIdx === -1) return s
 
-    const pendingCard = s.pendingActionCard!
-    // Remove the played action card from the drawer's hand
-    const drawerIdx = s.players.findIndex(p => p.id === s.pendingActionPlayerId)
+    // Remove the action card from the drawer's hand
+    const drawerIdx = s.players.findIndex(p => p.id === current.playerId)
     if (drawerIdx !== -1) {
       const players = s.players.map((p, i) =>
-        i === drawerIdx ? { ...p, cards: p.cards.filter(c => c.id !== pendingCard.id) } : p
+        i === drawerIdx ? { ...p, cards: p.cards.filter(c => c.id !== current.card.id) } : p
       )
       s = { ...s, players }
     }
-    s = { ...s, phase: 'playing', pendingActionCard: undefined, pendingActionPlayerId: undefined }
+    s = { ...s, phase: 'playing', pendingActionQueue: remaining }
 
-    if (pendingCard.action === 'freeze') {
+    if (current.card.action === 'freeze') {
       const players = s.players.map((p, i) =>
-        i === targetIdx ? { ...p, status: 'frozen' as const, cards: [...p.cards, pendingCard] } : p
+        i === targetIdx ? { ...p, status: 'frozen' as const, cards: [...p.cards, current.card] } : p
       )
       s = { ...s, players }
       if (allDone(s)) return endRound(s)
+      if (remaining.length > 0) return { ...s, phase: 'awaiting_target' }
       return advancePlayer(s)
     }
 
-    if (pendingCard.action === 'flip_three') {
+    if (current.card.action === 'flip_three') {
       s = { ...s, pendingFlipThreeDraws: 3, currentPlayerIndex: targetIdx }
       return applyFlipThreeDraws(s)
+      // resolveQueuedAction inside applyFlipThreeDraws handles any remaining queue items
     }
 
     return s
@@ -285,29 +287,32 @@ function processDrawnCard(
     s = { ...s, players: playersWithCard }
 
     if (card.action === 'second_chance') {
-      // Turn ends after drawing Second Chance (passive card, no targeting)
+      if (s.pendingFlipThreeDraws > 0) {
+        // Passive card during forced draw — just keep it, continue drawing
+        s = { ...s, pendingFlipThreeDraws: s.pendingFlipThreeDraws - 1 }
+        if (s.pendingFlipThreeDraws === 0) return resolveQueuedAction(s)
+        return s
+      }
       return advancePlayer(s)
     }
 
-    // Freeze or Flip Three: need to pick a target
-    // If in a Flip Three sequence, queue it for after
+    // Freeze or Flip Three
     if (s.pendingFlipThreeDraws > 0) {
-      s = { ...s, pendingFlipThreeDraws: s.pendingFlipThreeDraws - 1 }
-      if (!s.pendingActionCard) {
-        s = { ...s, pendingActionCard: card, pendingActionPlayerId: s.players[playerIdx].id }
+      // Queue it — every action card found gets resolved after all draws complete
+      s = {
+        ...s,
+        pendingFlipThreeDraws: s.pendingFlipThreeDraws - 1,
+        pendingActionQueue: [...s.pendingActionQueue, { card, playerId: s.players[playerIdx].id }],
       }
-      if (s.pendingFlipThreeDraws === 0) {
-        return resolveQueuedAction(s)
-      }
+      if (s.pendingFlipThreeDraws === 0) return resolveQueuedAction(s)
       return s
     }
 
-    // Normal: enter awaiting_target
+    // Normal flip: enter awaiting_target immediately
     return {
       ...s,
       phase: 'awaiting_target',
-      pendingActionCard: card,
-      pendingActionPlayerId: player.id,
+      pendingActionQueue: [{ card, playerId: player.id }],
     }
   }
 
@@ -406,14 +411,8 @@ function applyFlipThreeDraws(session: GameSession): GameSession {
 }
 
 function resolveQueuedAction(session: GameSession): GameSession {
-  const s = session
-  if (!s.pendingActionCard) return advancePlayer(s)
-
-  return {
-    ...s,
-    phase: 'awaiting_target',
-    pendingFlipThreeDraws: 0,
-  }
+  if (session.pendingActionQueue.length === 0) return advancePlayer(session)
+  return { ...session, phase: 'awaiting_target', pendingFlipThreeDraws: 0 }
 }
 
 // ── Serialize for client ──────────────────────────────────────────────────────

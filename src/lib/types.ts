@@ -24,6 +24,11 @@ export interface Player {
 
 export type GamePhase = 'lobby' | 'dealing' | 'playing' | 'awaiting_target' | 'round_end' | 'game_end'
 
+export interface PendingAction {
+  card: Card
+  playerId: string
+}
+
 export interface GameSession {
   code: string
   hostId: string
@@ -34,8 +39,7 @@ export interface GameSession {
   roundNumber: number
   dealerIndex: number
   pendingFlipThreeDraws: number
-  pendingActionCard?: Card
-  pendingActionPlayerId?: string
+  pendingActionQueue: PendingAction[]
   lastFlippedCard?: Card
   lastDiscard?: Card[]
   lastActivity: number

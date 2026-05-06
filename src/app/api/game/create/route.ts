@@ -33,6 +33,7 @@ export async function POST(req: NextRequest) {
     roundNumber: 1,
     dealerIndex: 0,
     pendingFlipThreeDraws: 0,
+    pendingActionQueue: [],
     lastActivity: Date.now(),
   }
 
