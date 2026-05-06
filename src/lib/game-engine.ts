@@ -217,7 +217,7 @@ export function applyAction(
       )
       s = { ...s, players }
       if (allDone(s)) return endRound(s)
-      if (remaining.length > 0) return { ...s, phase: 'awaiting_target' }
+      if (remaining.length > 0) return enterAwaitingTarget(s)
       return advancePlayer(s)
     }
 
@@ -308,12 +308,8 @@ function processDrawnCard(
       return s
     }
 
-    // Normal flip: enter awaiting_target immediately
-    return {
-      ...s,
-      phase: 'awaiting_target',
-      pendingActionQueue: [{ card, playerId: player.id }],
-    }
+    // Normal flip: enter awaiting_target (or auto-resolve if no other targets)
+    return enterAwaitingTarget({ ...s, pendingActionQueue: [{ card, playerId: player.id }] })
   }
 
   // ── Number card ──
@@ -416,8 +412,21 @@ function applyFlipThreeDraws(session: GameSession): GameSession {
 }
 
 function resolveQueuedAction(session: GameSession): GameSession {
+  return enterAwaitingTarget({ ...session, pendingFlipThreeDraws: 0 })
+}
+
+// Transition to awaiting_target, but skip it if the drawer has no valid other targets
+function enterAwaitingTarget(session: GameSession): GameSession {
   if (session.pendingActionQueue.length === 0) return advancePlayer(session)
-  return { ...session, phase: 'awaiting_target', pendingFlipThreeDraws: 0 }
+  const current = session.pendingActionQueue[0]
+  const hasOtherTargets = session.players.some(
+    p => p.id !== current.playerId && p.status === 'active'
+  )
+  const s = { ...session, phase: 'awaiting_target' as const }
+  if (!hasOtherTargets) {
+    return applyAction(s, current.playerId, { type: 'target_action', targetPlayerId: current.playerId })
+  }
+  return s
 }
 
 // ── Serialize for client ──────────────────────────────────────────────────────

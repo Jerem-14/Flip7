@@ -1,6 +1,5 @@
 'use client'
 
-import { useEffect } from 'react'
 import { ClientGameState, GameAction } from '@/lib/types'
 
 interface Props {
@@ -20,14 +19,8 @@ export default function ActionButtons({ state, myId, onAction }: Props) {
     ? state.players.filter(p => p.id !== myId && p.status === 'active')
     : []
 
-  // Auto-resolve when no other active players are available as targets
-  useEffect(() => {
-    if (needsTarget && otherTargets.length === 0) {
-      onAction({ type: 'target_action', targetPlayerId: myId })
-    }
-  }, [needsTarget, otherTargets.length, myId, onAction])
-
   if (!me) return null
+
 
   const isMyTurn =
     state.players[state.currentPlayerIndex]?.id === myId &&
@@ -35,11 +28,6 @@ export default function ActionButtons({ state, myId, onAction }: Props) {
     me.status === 'active'
 
   if (needsTarget) {
-    const targets = otherTargets
-    if (targets.length === 0) {
-      return <div className="text-sm text-gray-400 animate-pulse">Auto-resolving…</div>
-    }
-
     return (
       <div className="flex flex-col items-center gap-3">
         <p className="text-sm text-orange-400 font-semibold">
@@ -47,7 +35,7 @@ export default function ActionButtons({ state, myId, onAction }: Props) {
           {state.pendingActionQueue[0]?.card.action === 'freeze' ? 'Freeze' : 'Flip Three'}:
         </p>
         <div className="flex flex-wrap gap-2 justify-center">
-          {targets.map(p => (
+          {otherTargets.map(p => (
             <button
               key={p.id}
               onClick={() => onAction({ type: 'target_action', targetPlayerId: p.id })}
