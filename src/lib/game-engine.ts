@@ -341,6 +341,11 @@ function processDrawnCard(
       )
       s = { ...s, players }
       if (allDone(s)) return endRound(s)
+      // Cancel remaining forced draws — bust ends Flip Three for this player
+      if (s.pendingFlipThreeDraws > 0) {
+        s = { ...s, pendingFlipThreeDraws: 0, pendingActionQueue: [] }
+        return advancePlayer(s)
+      }
       return advancePlayer(s)
     }
 
