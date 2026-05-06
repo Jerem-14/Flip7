@@ -316,15 +316,14 @@ function processDrawnCard(
     if (wouldBust(player, card)) {
       // Can use Second Chance?
       if (player.hasSecondChance) {
-        // Discard Second Chance + the duplicate; player keeps their turn
-        const secondChanceCard = player.cards.find(c => c.action === 'second_chance')
+        // Discard one Second Chance + the duplicate; player keeps their turn
+        const scIdx = player.cards.findIndex(c => c.action === 'second_chance')
+        const secondChanceCard = player.cards[scIdx]
+        const cardsAfter = player.cards.filter((_, i) => i !== scIdx)
+        const stillHasSecondChance = cardsAfter.some(c => c.action === 'second_chance')
         const players = s.players.map((p, i) =>
           i === playerIdx
-            ? {
-                ...p,
-                hasSecondChance: false,
-                cards: p.cards.filter(c => c.action !== 'second_chance'),
-              }
+            ? { ...p, hasSecondChance: stillHasSecondChance, cards: cardsAfter }
             : p
         )
         const lastDiscard = secondChanceCard ? [secondChanceCard, card] : [card]
