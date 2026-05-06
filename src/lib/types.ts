@@ -42,6 +42,8 @@ export interface GameSession {
   pendingActionQueue: PendingAction[]
   lastFlippedCard?: Card
   lastDiscard?: Card[]
+  lastFlipThreeCards?: Card[]
+  lastFlipThreeTargetId?: string
   lastActivity: number
   winnerId?: string
 }

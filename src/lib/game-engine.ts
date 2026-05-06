@@ -223,7 +223,13 @@ export function applyAction(
 
     if (current.card.action === 'flip_three') {
       const drawerIdx = s.players.findIndex(p => p.id === current.playerId)
-      s = { ...s, pendingFlipThreeDraws: 3, currentPlayerIndex: targetIdx }
+      s = {
+        ...s,
+        pendingFlipThreeDraws: 3,
+        currentPlayerIndex: targetIdx,
+        lastFlipThreeCards: [current.card],
+        lastFlipThreeTargetId: s.players[targetIdx].id,
+      }
       s = applyFlipThreeDraws(s)
       // After forced draws, advance turn from the drawer (not the target)
       if (s.phase === 'playing' && drawerIdx !== -1) {
@@ -256,7 +262,7 @@ export function applyAction(
   if (action.type === 'flip') {
     if (s.phase !== 'playing' || playerIdx !== s.currentPlayerIndex || player.status !== 'active') return s
 
-    s = { ...s, lastDiscard: undefined }
+    s = { ...s, lastDiscard: undefined, lastFlipThreeCards: undefined, lastFlipThreeTargetId: undefined }
 
     let [card, next] = drawCard(s)
     s = next
@@ -409,7 +415,7 @@ function applyFlipThreeDraws(session: GameSession): GameSession {
     let [card, next] = drawCard(s)
     s = next
     if (!card) break
-    s = { ...s, lastFlippedCard: card }
+    s = { ...s, lastFlippedCard: card, lastFlipThreeCards: [...(s.lastFlipThreeCards ?? []), card] }
     s = processDrawnCard(s, targetIdx, card)
     // processDrawnCard may change pendingFlipThreeDraws; loop re-checks
   }

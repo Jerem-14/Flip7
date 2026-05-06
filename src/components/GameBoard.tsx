@@ -79,6 +79,17 @@ export default function GameBoard({ state, myId, onAction }: Props) {
               </div>
             )}
 
+            {state.lastFlipThreeTargetId === myId && state.lastFlipThreeCards && state.lastFlipThreeCards.length > 0 && (
+              <div className="flex items-center gap-2 mb-3 flex-wrap">
+                <span className="text-xs text-orange-400">flip three forced:</span>
+                {state.lastFlipThreeCards.map((c, i) => (
+                  <div key={`${c.id}-${i}`} className={i === 0 ? 'opacity-50' : ''}>
+                    <CardComponent card={c} size="lg" />
+                  </div>
+                ))}
+              </div>
+            )}
+
             <div className="flex justify-center">
               <ActionButtons state={state} myId={myId} onAction={onAction} />
             </div>
