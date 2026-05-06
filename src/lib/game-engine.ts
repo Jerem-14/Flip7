@@ -22,7 +22,7 @@ export function buildDeck(): Card[] {
   }
 
   // Action cards (3 of each)
-  for (let i = 0; i < 15; i++) {
+  for (let i = 0; i < 45; i++) {
     //cards.push({ id: id(), type: 'action', action: 'freeze' })
     //cards.push({ id: id(), type: 'action', action: 'second_chance' })
     cards.push({ id: id(), type: 'action', action: 'flip_three' })
@@ -222,9 +222,14 @@ export function applyAction(
     }
 
     if (current.card.action === 'flip_three') {
+      const drawerIdx = s.players.findIndex(p => p.id === current.playerId)
       s = { ...s, pendingFlipThreeDraws: 3, currentPlayerIndex: targetIdx }
-      return applyFlipThreeDraws(s)
-      // resolveQueuedAction inside applyFlipThreeDraws handles any remaining queue items
+      s = applyFlipThreeDraws(s)
+      // After forced draws, advance turn from the drawer (not the target)
+      if (s.phase === 'playing' && drawerIdx !== -1) {
+        return advancePlayer({ ...s, currentPlayerIndex: drawerIdx })
+      }
+      return s
     }
 
     return s
