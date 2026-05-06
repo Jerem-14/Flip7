@@ -217,9 +217,7 @@ export function applyAction(
       )
       s = { ...s, players }
       if (allDone(s)) return endRound(s)
-      // If the frozen player was the current player, advance
-      if (targetIdx === s.currentPlayerIndex) s = advancePlayer(s)
-      return s
+      return advancePlayer(s)
     }
 
     if (pendingCard.action === 'flip_three') {
