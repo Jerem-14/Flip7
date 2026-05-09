@@ -22,9 +22,9 @@ export function buildDeck(): Card[] {
   }
 
   // Action cards (3 of each)
-  for (let i = 0; i < 45; i++) {
-    //cards.push({ id: id(), type: 'action', action: 'freeze' })
-    //cards.push({ id: id(), type: 'action', action: 'second_chance' })
+  for (let i = 0; i < 3; i++) {
+    cards.push({ id: id(), type: 'action', action: 'freeze' })
+    cards.push({ id: id(), type: 'action', action: 'second_chance' })
     cards.push({ id: id(), type: 'action', action: 'flip_three' })
   }
 
