@@ -339,7 +339,14 @@ function processDrawnCard(
             : p
         )
         const lastDiscard = secondChanceCard ? [secondChanceCard, card] : [card]
-        return { ...s, players, lastDiscard }
+        s = { ...s, players, lastDiscard }
+        // During forced Flip Three draws, count this as one draw and continue
+        if (s.pendingFlipThreeDraws > 0) {
+          s = { ...s, pendingFlipThreeDraws: s.pendingFlipThreeDraws - 1 }
+          if (s.pendingFlipThreeDraws === 0) return resolveQueuedAction(s)
+          return s
+        }
+        return s
       }
 
       // Bust
