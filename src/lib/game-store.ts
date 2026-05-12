@@ -11,7 +11,7 @@ function getRedis() {
   return new Redis({ url, token }) as import('@upstash/redis').Redis
 }
 
-const SESSION_TTL = 30 * 60 // 30 minutes
+const SESSION_TTL = 60 * 60 // 1 hour
 const KEY = (code: string) => `game:${code}`
 
 // ── In-memory fallback for local dev ─────────────────────────────────────────
