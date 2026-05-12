@@ -11,11 +11,11 @@ export async function POST(
   const { code } = await params
   const { playerId, action }: { playerId: string; action: GameAction } = await req.json()
 
-  const session = getSession(code)
+  const session = await getSession(code)
   if (!session) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   const updated = applyAction(session, playerId, action)
-  setSession(updated)
+  await setSession(updated)
   broadcast(code, toClientState(updated))
 
   return NextResponse.json({ ok: true })

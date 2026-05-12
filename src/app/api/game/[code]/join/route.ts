@@ -11,7 +11,7 @@ export async function POST(
   const { code } = await params
   const { nickname, playerId: existingId } = await req.json()
 
-  const session = getSession(code)
+  const session = await getSession(code)
   if (!session) {
     return NextResponse.json({ error: 'Game not found' }, { status: 404 })
   }
@@ -54,7 +54,7 @@ export async function POST(
     ],
   }
 
-  setSession(updated)
+  await setSession(updated)
   broadcast(code, toClientState(updated))
 
   return NextResponse.json({ playerId })

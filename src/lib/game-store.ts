@@ -1,35 +1,56 @@
 import { GameSession } from './types'
 
+// ── Redis client (Upstash, only when env vars are present) ────────────────────
+
+function getRedis() {
+  const url = process.env.UPSTASH_REDIS_REST_URL
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN
+  if (!url || !token) return null
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { Redis } = require('@upstash/redis')
+  return new Redis({ url, token }) as import('@upstash/redis').Redis
+}
+
+const SESSION_TTL = 30 * 60 // 30 minutes
+const KEY = (code: string) => `game:${code}`
+
+// ── In-memory fallback for local dev ─────────────────────────────────────────
+
 declare global {
   // eslint-disable-next-line no-var
   var __gameStore: Map<string, GameSession> | undefined
 }
 
-// Survive Next.js hot-reloads in dev
-const store: Map<string, GameSession> = global.__gameStore ?? new Map()
+const mem: Map<string, GameSession> = global.__gameStore ?? new Map()
 if (!global.__gameStore) {
-  global.__gameStore = store
-
-  // Prune sessions inactive for 30 min every 5 min
+  global.__gameStore = mem
   setInterval(() => {
-    const cutoff = Date.now() - 30 * 60 * 1000
-    for (const [code, session] of store) {
-      if (session.lastActivity < cutoff) store.delete(code)
-    }
+    const cutoff = Date.now() - SESSION_TTL * 1000
+    for (const [code, s] of mem) if (s.lastActivity < cutoff) mem.delete(code)
   }, 5 * 60 * 1000)
 }
 
-export function getSession(code: string): GameSession | undefined {
-  return store.get(code)
+// ── Store API ─────────────────────────────────────────────────────────────────
+
+export async function getSession(code: string): Promise<GameSession | undefined> {
+  const redis = getRedis()
+  if (redis) return (await redis.get<GameSession>(KEY(code))) ?? undefined
+  return mem.get(code)
 }
 
-export function setSession(session: GameSession): void {
-  store.set(session.code, session)
+export async function setSession(session: GameSession): Promise<void> {
+  const redis = getRedis()
+  if (redis) { await redis.set(KEY(session.code), session, { ex: SESSION_TTL }); return }
+  mem.set(session.code, session)
 }
 
-export function deleteSession(code: string): void {
-  store.delete(code)
+export async function deleteSession(code: string): Promise<void> {
+  const redis = getRedis()
+  if (redis) { await redis.del(KEY(code)); return }
+  mem.delete(code)
 }
+
+// ── Code generation ───────────────────────────────────────────────────────────
 
 function generateCode(): string {
   const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
@@ -38,8 +59,13 @@ function generateCode(): string {
   return `${part1}-${part2}`
 }
 
-export function createUniqueCode(): string {
+export async function createUniqueCode(): Promise<string> {
+  const redis = getRedis()
   let code = generateCode()
-  while (store.has(code)) code = generateCode()
+  if (redis) {
+    while (await redis.exists(KEY(code))) code = generateCode()
+  } else {
+    while (mem.has(code)) code = generateCode()
+  }
   return code
 }

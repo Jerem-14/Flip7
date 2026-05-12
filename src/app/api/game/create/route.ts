@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Nickname required' }, { status: 400 })
   }
 
-  const code = createUniqueCode()
+  const code = await createUniqueCode()
   const playerId = randomUUID()
 
   const session: GameSession = {
@@ -37,6 +37,6 @@ export async function POST(req: NextRequest) {
     lastActivity: Date.now(),
   }
 
-  setSession(session)
+  await setSession(session)
   return NextResponse.json({ code, playerId })
 }

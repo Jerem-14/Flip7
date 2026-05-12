@@ -11,7 +11,7 @@ export async function POST(
   const { code } = await params
   const { playerId } = await req.json()
 
-  const session = getSession(code)
+  const session = await getSession(code)
   if (!session) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   if (session.hostId !== playerId) return NextResponse.json({ error: 'Not host' }, { status: 403 })
   if (session.phase !== 'lobby') return NextResponse.json({ error: 'Already started' }, { status: 400 })
@@ -23,7 +23,7 @@ export async function POST(
     lastActivity: Date.now(),
   })
 
-  setSession(started)
+  await setSession(started)
   broadcast(code, toClientState(started))
 
   return NextResponse.json({ ok: true })
